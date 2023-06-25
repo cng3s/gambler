@@ -12,6 +12,7 @@
 #include <thread>
 #include <vector>
 
+#include "common.hpp"
 #include "msg.hpp"
 #include "err.hpp"
 
@@ -64,16 +65,14 @@ public:
 
 	void do_read()
 	{
-		ws_.async_read(
-			msg_.buf,
-			beast::bind_front_handler(&session::on_read, shared_from_this()));
+		ws_.async_read(msg_.buf,
+				beast::bind_front_handler(&session::on_read, shared_from_this()));
 	}
 
 	void on_read(beast::error_code ec, std::size_t bytes_transferred)
 	{
 		boost::ignore_unused(bytes_transferred);
 
-		// This indicates that the session was closed
 		if(ec == websocket::error::closed)
 			return;
 
@@ -82,26 +81,8 @@ public:
 
 		// Echo the message
 		ws_.text(ws_.got_text());
-		printf("recevie %d bytes message: %s\n", msg_.buf.size(), msg_.buf.data());
 		
-		
-		msg_.do_parse();
-
-		const char *str = "here is server! good good flat buffer";
-		json::object js {
-			{"cmd", 1},
-			{"msg", str}
-		};
-		std::string js_str = json::serialize(js);
-
-		msg_.buf.clear();
-		auto buf = msg_.buf.prepare(js_str.size());
-		char *const p = static_cast<char *const>(buf.data());
-		std::cout << "js_str:" << js_str << std::endl;
-		memcpy(p, js_str.c_str(), js_str.size()); 
-		msg_.buf.commit(js_str.size());
-		printf("js_str: %s, buffer_.size(): %d, js_str().size(): %d\n", 
-			js_str.c_str(), msg_.buf.size() , js_str.size());
+		msg_.handle();
 
 		ws_.async_write(
 			msg_.buf.data(),
@@ -118,7 +99,6 @@ public:
 		// Clear the buffer
 		msg_.buf.consume(msg_.buf.size());
 
-		// Do another read
 		do_read();
 	}
 
@@ -196,6 +176,8 @@ private:
 
 int main(int argc, char* argv[])
 {
+	global_init();
+
 	auto const address = net::ip::make_address("192.168.85.130");
 	auto const port = static_cast<unsigned short>(3000);
 	auto const threads = std::max<int>(1, 1);
@@ -212,6 +194,8 @@ int main(int argc, char* argv[])
 	for(auto i = threads - 1; i > 0; --i)
 		v.emplace_back([&ioc] { ioc.run(); });
 	ioc.run();
+
+	global_deinit();
 
 	return EXIT_SUCCESS;
 }
