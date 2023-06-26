@@ -6,8 +6,10 @@
 #include <boost/log/expressions.hpp>
 
 #include "usermgr.hpp"
+#include "roommgr.hpp"
 
 usermgr *g_usermgr;
+roommgr *g_roommgr;
 
 namespace logging = boost::log;
 void log_init()
@@ -19,11 +21,13 @@ void global_init()
 {
 	log_init();
 	g_usermgr = new usermgr();
+	g_roommgr = new roommgr();
 }
 
 void global_deinit()
 {
 	delete g_usermgr;
+	delete g_roommgr;
 }
 
 #endif
