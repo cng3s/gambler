@@ -56,6 +56,12 @@ public:
 		if (it != online_.end())
 			online_.erase(it);
 	}
+
+	bool is_user_online(userid_t userid)
+	{
+		std::lock_guard lg(mtx_);
+		return online_.find(userid) != online_.end();
+	}
 };
 
 #endif

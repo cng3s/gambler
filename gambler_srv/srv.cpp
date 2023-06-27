@@ -14,7 +14,6 @@
 
 #include "common.hpp"
 #include "msg.hpp"
-#include "err.hpp"
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -76,8 +75,10 @@ public:
 		if(ec == websocket::error::closed)
 			return;
 
-		if(ec)
-			return fail(ec, "read");
+		if(ec) {
+			BOOST_LOG_TRIVIAL(error) << ec.message();
+			return;
+		}
 
 		// Echo the message
 		ws_.text(ws_.got_text());
@@ -93,8 +94,10 @@ public:
 	{
 		boost::ignore_unused(bytes_transferred);
 
-		if(ec)
-			return fail(ec, "write");
+		if(ec) {
+			BOOST_LOG_TRIVIAL(error) << ec.message();
+			return;
+		}
 
 		// Clear the buffer
 		msg_.buf.consume(msg_.buf.size());
@@ -104,8 +107,10 @@ public:
 
 	void on_accept(beast::error_code ec)
 	{
-		if(ec)
-			return fail(ec, "accept");
+		if(ec) {
+			BOOST_LOG_TRIVIAL(error) << ec.message();
+			return;
+		}
 
 		do_read();
 	}
@@ -125,25 +130,25 @@ public:
 
 		acceptor_.open(endpoint.protocol(), ec);
 		if(ec) {
-			fail(ec, "open");
+			BOOST_LOG_TRIVIAL(error) << ec.message();
 			return;
 		}
 
 		acceptor_.set_option(net::socket_base::reuse_address(true), ec);
 		if(ec) {
-			fail(ec, "set_option");
+			BOOST_LOG_TRIVIAL(error) << ec.message();
 			return;
 		}
 
 		acceptor_.bind(endpoint, ec);
 		if(ec) {
-			fail(ec, "bind");
+			BOOST_LOG_TRIVIAL(error) << ec.message();
 			return;
 		}
 
 		acceptor_.listen(net::socket_base::max_listen_connections, ec);
 		if(ec) {
-			fail(ec, "listen");
+			BOOST_LOG_TRIVIAL(error) << ec.message();
 			return;
 		}
 	}
@@ -165,7 +170,7 @@ private:
 	void on_accept(beast::error_code ec, tcp::socket socket)
 	{
 		if(ec)
-			fail(ec, "accept");
+			BOOST_LOG_TRIVIAL(error) << ec.message();
 		else
 			std::make_shared<session>(std::move(socket))->run();
 

@@ -23,4 +23,12 @@ enum class user_state_t : uint8_t {
 	playing_the_game,
 };
 
+
+enum class cmd_t : uint8_t {
+	login = 1,
+	logout,
+	create_room,
+	join_room,
+};
+
 #endif

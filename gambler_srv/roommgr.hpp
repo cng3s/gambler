@@ -3,25 +3,26 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <memory>
 #include <mutex>
 
 #include "types.hpp"
-#include "utils.hpp"
+
 
 class room {
 private:
+	std::mutex mtx_;
 	game_t game_type_;
 	roomid_t roomid_;
-	std::vector<userid_t> users_;
+	std::set<userid_t> users_;
 
 public:
-	explicit room(game_t game_type, userid_t creator)
-		: game_type_(game_type), roomid_(invalid_roomid), users_{ creator }
-	{}
+	explicit room(game_t game_type, userid_t creator);
 
-	void set_roomid(roomid_t roomid)
-	{ roomid_ = roomid; }
+	void set_roomid(roomid_t roomid);
+
+	bool do_join(userid_t userid);
 };
 
 class roommgr {
@@ -30,29 +31,16 @@ private:
 	std::mutex mtx_;
 
 public:
-	void create_room(game_t type, userid_t creator)
-	{
-		std::unique_ptr<room> roomptr = std::make_unique<room>(type, creator);
-		roomid_t roomid = invalid_roomid;
-		{
-			std::lock_guard<std::mutex> lg(mtx_);
-			do {
-				roomid = gen_roomid();
-			} while (!is_roomid_available_locked(roomid));
-			roomptr->set_roomid(roomid);
-			rooms_.emplace(roomid, std::move(roomptr));
-		}
-	}
+	bool create_room(game_t type, userid_t creator);
+
+	bool join_room(roomid_t roomid, userid_t userid);
 
 private:
-	bool is_roomid_available_locked(roomid_t roomid)
-	{ return is_roomid_valid_locked(roomid) && !is_roomid_exist_locked(roomid); }
+	bool is_roomid_available_locked(roomid_t roomid);
 
-	bool is_roomid_valid_locked(roomid_t roomid)
-	{ return roomid != invalid_roomid; }
+	bool is_roomid_valid_locked(roomid_t roomid);
 
-	bool is_roomid_exist_locked(roomid_t roomid)
-	{ return rooms_.find(roomid) != rooms_.end(); }
+	bool is_roomid_exist_locked(roomid_t roomid);
 };
 
 #endif

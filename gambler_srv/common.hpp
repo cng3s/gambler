@@ -4,30 +4,18 @@
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/json.hpp>
 
-#include "usermgr.hpp"
-#include "roommgr.hpp"
-
-usermgr *g_usermgr;
-roommgr *g_roommgr;
-
+namespace json = boost::json;
 namespace logging = boost::log;
-void log_init()
-{
-	logging::core::get()->set_filter(logging::trivial::severity >= logging::trivial::info);
-}
 
-void global_init()
-{
-	log_init();
-	g_usermgr = new usermgr();
-	g_roommgr = new roommgr();
-}
+class usermgr;
+class roommgr;
 
-void global_deinit()
-{
-	delete g_usermgr;
-	delete g_roommgr;
-}
+extern usermgr *g_usermgr;
+extern roommgr *g_roommgr;
+
+void global_init();
+void global_deinit();
 
 #endif
